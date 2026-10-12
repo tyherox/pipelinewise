@@ -1,0 +1,21 @@
+#!/bin/sh
+set -eu
+repo=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+spatial=${SPATIAL_CODE:-"$repo/../spatial-code"}
+if [ ! -f "$spatial/engine/src/cli.ts" ]; then
+  echo "Set SPATIAL_CODE to your spatial-code checkout." >&2
+  exit 1
+fi
+spatial=$(CDPATH= cd -- "$spatial" && pwd)
+command=${1:-open}
+[ "$#" -eq 0 ] || shift
+case "$command" in
+  build) exec node "$spatial/engine/src/cli.ts" map "$repo" --out "$repo/.spatial/map" "$@" ;;
+  verify) exec node "$spatial/engine/src/cli.ts" verify "$repo/.spatial/map" "$@" ;;
+  query) exec node "$spatial/engine/src/cli.ts" query "$repo/.spatial/map" "$@" ;;
+  open)
+    cd "$spatial"
+    exec coruscant up --instance wise-pipelinewise --var "project_path=$repo" "$@"
+    ;;
+  *) echo "Usage: ./spatial-map [open|build|verify|query <question> ...]" >&2; exit 2 ;;
+esac
